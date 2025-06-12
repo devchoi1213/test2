@@ -1,11 +1,51 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, CheckCircle, Star, Users, Zap, Shield } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 export default function Component() {
+  const [email, setEmail] = useState("")
+  const [message, setMessage] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!email) {
+      setMessage("이메일 주소를 입력해주세요.")
+      return
+    }
+    setSubmitting(true)
+    setMessage("등록 중입니다...")
+
+    try {
+      const response = await fetch("/api/add-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage("성공적으로 등록되었습니다! 감사합니다.")
+        setEmail("")
+      } else {
+        setMessage(data.message || "오류가 발생했습니다. 다시 시도해주세요.")
+      }
+    } catch (error) {
+      setMessage("오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -186,16 +226,21 @@ export default function Component() {
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
-                <form className="flex gap-2">
+                <form className="flex gap-2" onSubmit={handleSubmit}>
                   <Input
                     type="email"
                     placeholder="이메일 주소를 입력하세요"
                     className="max-w-lg flex-1 bg-background"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={submitting}
+                    required
                   />
-                  <Button type="submit" variant="secondary">
-                    시작하기
+                  <Button type="submit" variant="secondary" disabled={submitting}>
+                    {submitting ? "등록 중..." : "시작하기"}
                   </Button>
                 </form>
+                {message && <p className="text-xs text-primary-foreground/80 text-center pt-2">{message}</p>}
                 <p className="text-xs text-primary-foreground/60">
                   가입하시면{" "}
                   <Link href="#" className="underline underline-offset-2">
